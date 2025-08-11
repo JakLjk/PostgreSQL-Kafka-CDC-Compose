@@ -45,7 +45,7 @@ docker-compose up -d
 
 In PostgreSQL's container bash you have to set REPLICA IDENTITY FULL on the table that you want to monitor:
 ```bash
-ALTER TABLE <schema>.<table_name> REPLICA IDENITY FULL
+ALTER TABLE <schema>.<table_name> REPLICA IDENTITY FULL
 ```
 
 Register your conector in order to begin tracking changes in specific table 
@@ -53,5 +53,5 @@ Provided debezium.json can be used as template, and next sent to the debezium by
 ```bash
 curl -X POST http://<host_ip>:8083/connectors \
   -H "Content-Type: application/json" \
-  -data @debezium.json
+  --data @debezium.json
 ```
