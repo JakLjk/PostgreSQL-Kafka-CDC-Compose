@@ -55,3 +55,14 @@ curl -X POST http://<host_ip>:8083/connectors \
   -H "Content-Type: application/json" \
   --data @debezium.json
 ```
+
+Use the command attached below to consume topic within terminal (to see in real time new records that appear in the queue). This command also can serve a purpose of creating topic in Kafka (It will create new topic if debezium did not produce any new rows yet and topic has not been initialised)
+
+```bash
+docker run --rm -it --network <network_name> \
+  confluentinc/cp-kafkacat kafkacat \
+  -b kafka:9092 \
+  -C \
+  -t <postgres_container_name>.<schema>.<table_name> \
+  -o beginning
+```

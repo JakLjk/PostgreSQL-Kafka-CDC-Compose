@@ -5,7 +5,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - postgres_data_volume:/var/lib/postgresql/data
+      - postgres_data_volume_1:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -60,4 +60,4 @@ services:
 
 
 volumes:
-  postgres_data_volume:
+  postgres_data_volume_1:
