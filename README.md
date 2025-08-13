@@ -1,4 +1,10 @@
 # PostgreSQL-Kafka-CDC-Compose
+[![Docker](https://img.shields.io/badge/docker-ready-blue)](#)
+[![PostgreSQL](https://img.shields.io/badge/debezium%2Fpostgres-17-blue)](#)
+[![Zookeeper](https://img.shields.io/badge/confluentinc%2Fcp--zookeeper-5.5.3-blue)](#)
+[![Kafka](https://img.shields.io/badge/confluentinc%2Fcp--enterprise--kafka-5.5.3-blue)](#)
+[![Debezium Connect](https://img.shields.io/badge/debezium%2Fconnect-1.4-blue)](#)
+[![Schema Registry](https://img.shields.io/badge/confluentinc%2Fcp--schema--registry-5.5.3-blue)](#)
 
 
 ## General Information
@@ -59,7 +65,7 @@ curl -X POST http://<host_ip>:8083/connectors \
 Use the command attached below to consume topic within terminal (to see in real time new records that appear in the queue). This command also can serve a purpose of creating topic in Kafka (It will create new topic if debezium did not produce any new rows yet and topic has not been initialised)
 
 ```bash
-docker run --rm -it --network <network_name> \
+docker run --rm -it --network <docker_network_name> \
   confluentinc/cp-kafkacat kafkacat \
   -b kafka:9092 \
   -C \

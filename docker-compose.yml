@@ -7,19 +7,40 @@ services:
     volumes:
       - postgres_data_volume_1:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      
+      POSTGRES_USER: ${POSTGRES_USER}                  # CHANGED (format only; same value)
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}          # CHANGED (format only; same value)
+      POSTGRES_DB: ${POSTGRES_DB}  
+    # Works only in swarm mode or with --compatibility flag
+    deploy:
+      resources:
+        limits:
+          memory: 2g # 
 
   zookeeper:
     image: confluentinc/cp-zookeeper:5.5.3
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+      KAFKA_HEAP_OPTS: "-Xms512m -Xmx1g"  # 
+      # ZOOKEEPER_4LW_COMMANDS_WHITELIST: "*" 
+    volumes:
+      - zk_data_volume_1:/var/lib/zookeeper/data
+      - zk_datalog_volume_1:/var/lib/zookeeper/log
+    healthcheck:
+      test: ["CMD-SHELL", "zookeeper-shell 127.0.0.1:2181 ls / >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    # Works only in swarm mode or with --compatibility flag
+    deploy:
+      resources:
+        limits:
+          memory: 512m #
 
   kafka:
     image: confluentinc/cp-enterprise-kafka:5.5.3
-    depends_on: [zookeeper]
+    depends_on:
+      zookeeper:
+        condition: service_healthy
     environment:
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
@@ -30,12 +51,30 @@ services:
       KAFKA_BROKER_ID: ${KAFKA_BROKER_ID}
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_JMX_PORT: 9991
+
+      KAFKA_HEAP_OPTS: "-Xms768m -Xmx768m"
+      KAFKA_LOG_RETENTION_MS: 86400000
+      KAFKA_LOG_RETENTION_BYTES: 1073741824
+      KAFKA_LOG_SEGMENT_BYTES: 134217728
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
     ports:
       - "9092:9092"
+    volumes:
+      - kafka_data_volume_1:/var/lib/kafka/data
+    # Works only in swarm mode or with --compatibility flag
+    deploy:
+      resources:
+        limits:
+          memory: 2g #
 
   debezium:
     image: debezium/connect:1.4
     environment:
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_TOPIC: connect_statuses
+
       BOOTSTRAP_SERVERS: kafka:9092
       GROUP_ID: 1
       CONFIG_STORAGE_TOPIC: connect_configs
@@ -44,20 +83,35 @@ services:
       VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
       CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+
+      KAFKA_HEAP_OPTS: "-Xms512m -Xmx512m" #
     depends_on: [kafka]
     ports:
       - 8083:8083
-
+    # Works only in swarm mode or with --compatibility flag
+    deploy:
+      resources:
+        limits:
+          memory: 1g #
   schema-registry:
     image: confluentinc/cp-schema-registry:5.5.3
     environment:
-      - SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL=zookeeper:2181
-      - SCHEMA_REGISTRY_HOST_NAME=schema-registry
-      - SCHEMA_REGISTRY_LISTENERS=http://schema-registry:8081,http://localhost:8081
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: zookeeper:2181   # CHANGED (format only; same value)
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry                   # CHANGED (format only; same value)
+      SCHEMA_REGISTRY_LISTENERS: http://schema-registry:8081,http://localhost:8081  # CHANGED (format only; same value)
+
+      SCHEMA_REGISTRY_HEAP_OPTS: "-Xms256m -Xmx256m"
     ports:
       - 8081:8081
     depends_on: [zookeeper, kafka]
-
+    # Works only in swarm mode or with --compatibility flag
+    deploy:
+      resources:
+        limits:
+          memory: 512m #
 
 volumes:
   postgres_data_volume_1:
+  kafka_data_volume_1:
+  zk_data_volume_1:
+  zk_datalog_volume_1:
